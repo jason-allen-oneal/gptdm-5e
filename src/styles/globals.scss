@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+$backgroundColor: bg-base-200;
+$accent: bg-accent;
+$accentText: text-accent;
+
+html {
+  background-color: $backgroundColor;
+}

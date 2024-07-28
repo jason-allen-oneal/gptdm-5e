@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  roomId      Int
+  authorId    Int
+  recipientId Int?      // Allow recipientId to be nullable
+  time        DateTime  @default(now()) @db.Timestamp(0)
+  message     String    @db.Text
+  type        String    @default("chat") @db.VarChar(20)
+
+  author      User?      @relation("AuthoredMessages", fields: [authorId], references: [id])
+  recipient   User?     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  room        Room?      @relation(fields: [roomId], references: [id])
+
+  @@index([authorId], map: "authorId")
+  @@index([recipientId], map: "recipientId")
+  @@index([roomId], map: "roomId")
+}
+
+model Room {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique(map: "name") @db.VarChar(60)
+  slug         String    @db.VarChar(60)
+  creatorId    Int
+  date         DateTime  @default(now()) @db.Timestamp(0)
+  private      Boolean   @default(false)
+  count        Int       @default(1)
+  thread       String    @default("") @db.VarChar(255)
+  prompt       String    @default("") @db.Text
+  
+  messages     Message[]
+
+  @@index([creatorId], map: "creatorId")
+}
+
+model Player {
+  playerId            Int      @id @default(autoincrement())
+  userId              Int 
+  roomId              Int
+  avatar_url          String?  @db.VarChar(255)
+  class_level         String?  @db.VarChar(100)
+  race                String?  @db.VarChar(50)
+  background          String?  @db.VarChar(100)
+  alignment           String?  @db.VarChar(50)
+  experience          Int?
+  inspiration         Boolean?
+  proficiency_bonus   Int?
+  strength            Int?
+  dexterity           Int?
+  constitution        Int?
+  intelligence        Int?
+  wisdom              Int?
+  charisma            Int?
+  armor_class         Int?
+  initiative          Int?
+  speed               String?  @db.VarChar(50)
+  hit_points_current  Int?
+  hit_points_max      Int?
+  temporary_hit_points Int?
+  hit_dice            String?  @db.VarChar(50)
+  death_saves_successes Int?
+  death_saves_failures Int?
+  personality_traits  String?  @db.Text
+  ideals              String?  @db.Text
+  bonds               String?  @db.Text
+  flaws               String?  @db.Text
+  features_traits     String?  @db.Text
+  skills              String?  @db.Text
+  saving_throws       String?  @db.Text
+  attacks_spells      String?  @db.Text
+  equipment           String?  @db.Text
+  languages           String?  @db.Text
+  annotations         String?  @db.Text
+
+  user                User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "userId")
+  @@index([roomId], map: "roomId")
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(255)
+  text      String   @db.VarChar(20)
+  roomId    Int
+
+  @@index([roomId], map: "roomId")
+  @@index([text], map: "text")
+}
+
+model User {
+  id    Int       @id @unique @default(autoincrement())
+  email     String    @unique @db.VarChar(255)
+  password  String    @default("") @db.VarChar(255)
+  name      String    @db.VarChar(255)
+  joined    DateTime  @default(now()) @db.Timestamp(0)
+  admin     Boolean   @default(false)
+  roomId    Int      @default(1)
+  socket    String    @default("") @db.VarChar(255)
+  lastOnline DateTime @updatedAt
+
+  authoredMessages   Message[] @relation("AuthoredMessages")
+  receivedMessages   Message[] @relation("ReceivedMessages")
+  player             Player[]
+
+  @@index([roomId], map: "roomId")
+}
+
+
