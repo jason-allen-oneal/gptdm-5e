@@ -46,8 +46,12 @@ export default function RoomForm({ socket }: { socket: any }) {
             {...register('name')}
           />
           
-          <label>Campaign ides/requirements</label>
-          <textarea  {...register('prompt')} ppaceholder="Optional" />
+          <label>Campaign ideas/requirements</label>
+          <textarea 
+            {...register('prompt')}
+            placeholder="Optional"
+            className="input input-bordered border-accent w-full max-w-xs my-2"
+          />
               
           <label>Make Invite only?</label>
           <select

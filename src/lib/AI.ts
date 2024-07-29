@@ -1,4 +1,5 @@
 import sysPrompt from "@/files/sysPrompt";
+import prompts from "@/files/prompts";
 import prisma from "@/lib/prisma";
 import { getMessages } from "@/lib/services/room";
 import { formatModelInput, formatModelOutput, diceRoll } from "@/lib/utils";
@@ -106,7 +107,7 @@ export default class AI {
     let prompt = sysPrompt;
     
     if (query.event === "user-join") {
-      prompt = sysPrompt + "\n\nA new user has joined a room. Please welcome them in D&D style if the room ID is not 1. If the room ID is 1, a simple greeting will suffice. Do not use HTML or icons. Only markdown is allowed. If the room ID is not 1, the user will need a character to continue, and a player should be created if the player is an empty object."
+      prompt = sysPrompt + "\n\n" + prompts.userJoin;
     }
     
     return await this.interact(json, prompt);

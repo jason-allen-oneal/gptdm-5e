@@ -200,7 +200,7 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
             closeModal();
             setRoom(data.result.room);
             toast("success", data.message, async () => {
-              router.reload();
+              router.refresh();
             });
           } else {
             toast("error", data.message);
@@ -226,7 +226,7 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
         
         socketRef.current.on("change-room", (data) => {
           if (data.status == "ok") {
-            router.reload();
+            router.refresh();
           } else {
             toast("error", data.message);
           }
@@ -239,7 +239,7 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
     }
     
     connect();
-  }, [room, user, sysBot]);
+  }, [room, user, sysBot, router]);
   
   
   const sendMessage = (messageBody: string) => {
@@ -261,7 +261,7 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
   const startTypingMessage = useCallback(async () => {
     if (!socketRef.current) return;
     
-    socketRef.current.emit("typing-start", {
+    socketRef.current.emit("typings-start", {
       senderId: socketRef.current.id,
       user,
     });

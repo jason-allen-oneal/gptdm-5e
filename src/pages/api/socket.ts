@@ -143,7 +143,7 @@ async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
             slug: slug,
             creatorId: user.id,
             private: privacy,
-            thread: thread,
+            thread: thread.id,
             prompt: prompt,
           };
           
