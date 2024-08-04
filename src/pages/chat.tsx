@@ -39,7 +39,8 @@ export async function getServerSideProps(context) {
   const room = await getRoom(user.roomId);
   const rooms = await getRooms();
   const msgs = await getMessages(room.id);
-  
+  console.log('room on load', room);
+  console.log('user on load', user);
   return {
     props: {
       r: room,
@@ -196,9 +197,12 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
         });
         
         socketRef.current.on("new-room", (data: any) => {
+          console.log('new-room data', JSON.stringify(data));
           if (data.status == "ok") {
             closeModal();
             setRoom(data.result.room);
+            setUser(data.result.user);
+            setMessages([]);
             toast("success", data.message, async () => {
               router.refresh();
             });
@@ -322,9 +326,9 @@ export default function ChatPage({ r, u, rs, msgs }: InferGetServerSidePropsType
                   <h2 className="text-sm font-semibold tracking-widest uppercase collapse-title">Rooms</h2>
                   <div className="flex flex-col space-y-1 collapse-content">
                   {rooms && rooms.map((r: any, i: number) => (
-                    <a onClick={() => handleRoomChange(r.id)} key={i}>{r.name}</a>
+                    <a className="pt-2" onClick={() => handleRoomChange(r.id)} key={i}>{r.name}</a>
                   ))}
-                    <Link href="#" className="mt-8" onClick={openModal}>+ Create Room</Link>
+                    <Link href="#" className="pt-8" onClick={openModal}>+ Create Room</Link>
                   </div>
                 </div>
               

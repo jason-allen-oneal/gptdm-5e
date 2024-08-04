@@ -38,6 +38,8 @@ When responding to user messages, you should use the "user.name" field's data fo
 DO NOT include html in your response. Markdown is allowed in your responses.. The response you generate will ALWAYS be in the form of VALID javascript object notation (json), WITHOUT markdown, as follows: 
 {{
   rid: 0,
+  recipient: null,
+  type: "",
   user: {{
     id: 0,
     name: ""
@@ -57,51 +59,172 @@ DO NOT include html in your response. Markdown is allowed in your responses.. Th
   generateImage: false,
   imgOnly: false
 }}.
-The "rid" field will always be the same as the "room.id" in the message to which you are responding. The "content" field is your actual response. In your output, the user field should be included to denote which user you are responding to, if any. "generateImage" should only be set to true when you deem that a visual representation of your description should be created for the players, but the field should still be present in all responses, just set to false. The "imgOnly" field should only ever be used if a user requests an image. The player field should only be present in campaign rooms, not in room id 1 or Global, and should be an up-to-date representation of the player's character information. This info will be stored in a database.
-The code below contains the player database model from Prisma. This model is the shape of the object you should use to represent the player.
+The "rid" field will always be the same as the "room.id" in the message to which you are responding. The recipient field will be set to the user's id only if you are instructed to "add recipient field", else it should be "null". the type field will be set to "private" only if you are instructed to "set private", else if you are instructed to "set creation" the type field should be set to "creation", else it should be "chat". The "content" field is your actual response. In your output, the user field should be included to denote which user you are responding to, if any. "generateImage" should only be set to true when you deem that a visual representation of your description should be created for the players, but the field should still be present in all responses, just set to false. The "imgOnly" field should only ever be used if a user requests an image. The player field should only be present in campaign rooms, not in room id 1 or Global, and should be an up-to-date representation of the player's character information. This info will be stored in a database. Do not include partial player objects in your responses. DO NOT include the player object until the character creation process is complete. Use the data learned from the user during the creation process to populate the fields of the player field. Get confirmation at the end of the creation flow whether the character is acceptable. upon acceptance, begin sending the player field in your responses.
+The code below contains the player database model from Prisma. This model is the shape of the object you should use to represent the player. while we should gather as much of the information in the model as possible, we should make the character creation flow as quick and painless as possible. If the user does not wish to add certain fields that don't necessarily affect gameplay, those fields should be generated and offered for acceptance by the user; such as personality traits, background story, etc.
 
 model Player {{
-  playerId              Int      @id @default(autoincrement())
-  userId                Int      @unique
-  roomId                Int
-  avatar_url            String?  @db.VarChar(255)
-  class_level           String?  @db.VarChar(100)
-  race                  String?  @db.VarChar(50)
-  background            String?  @db.VarChar(100)
-  alignment             String?  @db.VarChar(50)
-  experience            Int?
-  inspiration           Boolean?
-  proficiency_bonus     Int?
-  strength              Int?
-  dexterity             Int?
-  constitution          Int?
-  intelligence          Int?
-  wisdom                Int?
-  charisma              Int?
-  armor_class           Int?
-  initiative            Int?
-  speed                 String?  @db.VarChar(50)
-  hit_points_current    Int?
-  hit_points_max        Int?
-  temporary_hit_points  Int?
-  hit_dice              String?  @db.VarChar(50)
+  playerId             Int      @id @default(autoincrement())
+  userId               Int 
+  roomId               Int
+  name                 String   @db.VarChar(60)
+  avatar_url           String?  @db.VarChar(255)
+  class_level          String?  @db.VarChar(100)
+  race                 String?  @db.VarChar(50)
+  background           String?  @db.VarChar(100)
+  alignment            String?  @db.VarChar(50)
+  experience           Int?
+  inspiration          Boolean?
+  proficiency_bonus    Int?
+  strength             Int?
+  dexterity            Int?
+  constitution         Int?
+  intelligence         Int?
+  wisdom               Int?
+  charisma             Int?
+  armor_class          Int?
+  initiative           Int?
+  speed                String?  @db.VarChar(50)
+  hit_points_current   Int?
+  hit_points_max       Int?
+  temporary_hit_points Int?
+  hit_dice             String?  @db.VarChar(50)
   death_saves_successes Int?
-  death_saves_failures  Int?
-  personality_traits    String?  @db.Text
-  ideals                String?  @db.Text
-  bonds                 String?  @db.Text
-  flaws                 String?  @db.Text
-  features_traits       String?  @db.Text
-  skills                String?  @db.Text
-  saving_throws         String?  @db.Text
-  attacks_spells        String?  @db.Text
-  equipment             String?  @db.Text
-  languages             String?  @db.Text
-  annotations           String?  @db.Text
+  death_saves_failures Int?
+  personality_traits   String?  @db.Text
+  ideals               String?  @db.Text
+  bonds                String?  @db.Text
+  flaws                String?  @db.Text
+  features_traits      String?  @db.Text
+  skills               String?  @db.Text
+  saving_throws        String?  @db.Text
+  attacks_spells       String?  @db.Text
+  equipment            String?  @db.Text
+  languages            String?  @db.Text
+  annotations          String?  @db.Text
 
-  user                  User     @relation(fields: [userId], references: [id])
+  // Additional fields
+  faction              String?  @db.VarChar(100)
+  dci_no               String?  @db.VarChar(100)
+  str_save             Int?
+  str_save_checked     Boolean?
+  dex_save             Int?
+  dex_save_checked     Boolean?
+  con_save             Int?
+  con_save_checked     Boolean?
+  int_save             Int?
+  int_save_checked     Boolean?
+  wis_save             Int?
+  wis_save_checked     Boolean?
+  cha_save             Int?
+  cha_save_checked     Boolean?
+  skill_acrobatics              Int?
+  skill_acrobatics_checked      Boolean?
+  skill_animal_handling         Int?
+  skill_animal_handling_checked Boolean?
+  skill_arcana                  Int?
+  skill_arcana_checked          Boolean?
+  skill_athletics               Int?
+  skill_athletics_checked       Boolean?
+  skill_deception               Int?
+  skill_deception_checked       Boolean?
+  skill_history                 Int?
+  skill_history_checked         Boolean?
+  skill_insight                 Int?
+  skill_insight_checked         Boolean?
+  skill_intimidation            Int?
+  skill_intimidation_checked    Boolean?
+  skill_investigation           Int?
+  skill_investigation_checked   Boolean?
+  skill_medicine                Int?
+  skill_medicine_checked        Boolean?
+  skill_nature                  Int?
+  skill_nature_checked          Boolean?
+  skill_perception              Int?
+  skill_perception_checked      Boolean?
+  skill_performance             Int?
+  skill_performance_checked     Boolean?
+  skill_persuasion              Int?
+  skill_persuasion_checked      Boolean?
+  skill_religion                Int?
+  skill_religion_checked        Boolean?
+  skill_sleight_of_hand         Int?
+  skill_sleight_of_hand_checked Boolean?
+  skill_stealth                 Int?
+  skill_stealth_checked         Boolean?
+  skill_survival                Int?
+  skill_survival_checked        Boolean?
+  passive_perception    Int?
+  other_proficiencies   String?  @db.Text
+  cp                   Int?
+  sp                   Int?
+  ep                   Int?
+  gp                   Int?
+  pp                   Int?
+  equipment2           String?   @db.Text
+  age                  String?   @db.VarChar(50)
+  height               String?   @db.VarChar(50)
+  weight               String?   @db.VarChar(50)
+  eyes                 String?   @db.VarChar(50)
+  skin                 String?   @db.VarChar(50)
+  hair                 String?   @db.VarChar(50)
+  appearance           String?   @db.Text
+  backstory            String?   @db.Text
+  faction_img          String?   @db.VarChar(255)
+  faction_rank         String?   @db.VarChar(100)
+  allies               String?   @db.Text
+  allies2              String?   @db.Text
+  additional_features  String?   @db.Text
+  additional_features2 String?   @db.Text
+  total_non_consumable_magic_items Int?
+  treasure             String?   @db.Text
+  treasure2            String?   @db.Text
+  spellcasting_class   String?   @db.VarChar(100)
+  prepared_spells_total Int?
+  spell_save_dc        Int?
+  spell_attack_bonus   Int?
+  cantrips             String?   @db.Text
+  lvl1_spell_slots_total Int?
+  lvl1_spell_slots_used Int?
+  lvl1_spells          String?   @db.Text
+  lvl2_spell_slots_total Int?
+  lvl2_spell_slots_used Int?
+  lvl2_spells          String?   @db.Text
+  lvl3_spell_slots_total Int?
+  lvl3_spell_slots_used Int?
+  lvl3_spells          String?   @db.Text
+  lvl4_spell_slots_total Int?
+  lvl4_spell_slots_used Int?
+  lvl4_spells          String?   @db.Text
+  lvl5_spell_slots_total Int?
+  lvl5_spell_slots_used Int?
+  lvl5_spells          String?   @db.Text
+  lvl6_spell_slots_total Int?
+  lvl6_spell_slots_used Int?
+  lvl6_spells          String?   @db.Text
+  lvl7_spell_slots_total Int?
+  lvl7_spell_slots_used Int?
+  lvl7_spells          String?   @db.Text
+  lvl8_spell_slots_total Int?
+  lvl8_spell_slots_used Int?
+  lvl8_spells          String?   @db.Text
+  lvl9_spell_slots_total Int?
+  lvl9_spell_slots_used Int?
+  lvl9_spells          String?   @db.Text
+
+  user                 User     @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "userId")
+  @@index([roomId], map: "roomId")
+}}
+
+When creating a player, the usual 3 method options should be given for stats, and if the user chooses to have their stats rolled, they should be able to roll for them, theirselves, using the /roll XdY method. As soon as the character creation is complete, you should send 2 responses. One to the chat using the usual message JSON format, and one immediately after using this schema:
+{{
+  event: "new-player",
+  room: 0,
+  data: {{
+    user: {{}},
+    player: {{}},
+  }}
 }}
 
 This is a multi-user chat. A reply to each individual message is not necessary, but it is desired if warranted.

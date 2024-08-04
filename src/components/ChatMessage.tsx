@@ -3,6 +3,7 @@ import Image from "next/image";
 import Markdown from 'react-markdown';
 
 export default function ChatMessage({ isMe, msg, appendUser, appendTime }: { isMe: boolean, msg: any, appendUser: boolean, appendTime: boolean }) {
+  console.log('msg', JSON.stringify(msg));
   const time = getTimeSince(msg.time);
   let color = "chat-bubble-secondary";
   if (!isMe) {
@@ -15,6 +16,9 @@ export default function ChatMessage({ isMe, msg, appendUser, appendTime }: { isM
   
   if (msg.author.id == 4) {
     color = "chat-bubble-success";
+    if (msg.type == "private" || msg.type == "creation") {
+      color = "chat-bubble-warning";
+    }
   }
   
   return (

@@ -9,7 +9,7 @@ export async function addRoom(data) {
     name: data.name,
     slug: slug,
     creatorId: data.creator,
-    thread: data.thread,
+    thread: "",
     private: data.privacy
   };
   
@@ -45,7 +45,7 @@ export async function getMessages(rid: number) {
     where: {
       AND: [
         {roomId: rid},
-        {type: "chat"}
+        {type: "chat"},
       ]
     },
     include: {

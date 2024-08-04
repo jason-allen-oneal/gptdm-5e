@@ -1,10 +1,21 @@
 import Image from "next/image";
 import { getTime } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
 
 export default function ChatUserCard({ user, isMe }: { user: any, isMe: boolean }) {
+  const router = useRouter();
+  
   const color = (isMe) ? 'bg-accent' : 'bg-secondary';
   const textColor = (isMe) ? 'text-accent-content' : 'text-secondary-content';
   const joined = getTime(user.joined);
+  
+  const handleProfileClick = (id: number) => {
+    router.push("/character/"+id);
+  };
+  
+  const handleMessageClick = (id: number) => {
+    
+  };
   
   return (
     <div className="flex flex-cols group relative w-max">
@@ -33,8 +44,11 @@ export default function ChatUserCard({ user, isMe }: { user: any, isMe: boolean 
               </tbody>
             </table>
             <div class="my-1">
-              <button className="btn btn-primary btn-xs">
+              <button className="btn btn-primary btn-xs" onClick={() => handleMessageClick(user.id)}>
                 <i className="fa-solid fa-message"></i>
+              </button>
+              <button className="btn btn-primary btn-xs" onClick={() => handleProfileClick(user.id)}>
+                <i className="fa-solid fa-user"></i>
               </button>
             </div>
 

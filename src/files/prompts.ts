@@ -1,6 +1,7 @@
 const prompts = {
-  userJoin: "A new user has joined a room. Please welcome them in D&D style if the room ID is not 1. If the room ID is 1, a simple greeting will suffice. Do not use HTML or icons. Only markdown is allowed. If the room ID is not 1, the user will need a character to continue, and a player should be created if the player is an empty object."
-  
+  "no-html": "Do not use HTML or icons. Only markdown is allowed.",
+  "user-join": "A user, %s, has joined the global lobby room. send a simple welcome greeting. DO NOT CALL TOOLS FOR THIS PROMPT.",
+  "user-join-room": "A user, %s, has joined a game room with id of %s. add recipient field equal to %s. the user should be greeted with a D&D style welcome. the user will need a character to continue, and a player should be created if the player field is an empty object. if the user needs to create a character set creation else set creation. DO NOT CALL TOOLS FOR THIS PROMPT.",
 };
 
 export default prompts;

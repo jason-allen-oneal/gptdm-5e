@@ -3,7 +3,7 @@ import { formatDistance, format } from "date-fns";
 export function diceRoll(num: number, sides: number) {
   let str = "You rolled ";
   let total = 0;
-  for (let i = 0; i <= num; i++) {
+  for (let i = 1; i <= num; i++) {
     const result = 1 + Math.floor(Math.random() * sides);
     str += result+", ";
     total += result;
@@ -34,6 +34,9 @@ export function getTime(time) {
   return format(new Date(time), 'MM/dd/yyyy')
 }
 
+const strFormat = (str, ...args) => args.reduce((s, v) => s.replace('%s', v), str);
+export {strFormat};
+
 export function formatModelInput(data, player) {
   const aiInput = {
     id: data.author.id,
@@ -49,11 +52,12 @@ export function formatModelInput(data, player) {
 
 export function formatModelOutput(data) {
   const aiObj = {
-    room: data.rid,
+    room: data["rid"] || data.roomId,
     authorId: 4,
-    recipient: null,
+    recipient: data.recipient,
     message: data.content || data.message,
-    type: "chat"
+    type: data.type,
+    time: data.time,
   };
   
   return aiObj;

@@ -42,45 +42,155 @@ model Room {
 }
 
 model Player {
-  playerId            Int      @id @default(autoincrement())
-  userId              Int 
-  roomId              Int
-  avatar_url          String?  @db.VarChar(255)
-  class_level         String?  @db.VarChar(100)
-  race                String?  @db.VarChar(50)
-  background          String?  @db.VarChar(100)
-  alignment           String?  @db.VarChar(50)
-  experience          Int?
-  inspiration         Boolean?
-  proficiency_bonus   Int?
-  strength            Int?
-  dexterity           Int?
-  constitution        Int?
-  intelligence        Int?
-  wisdom              Int?
-  charisma            Int?
-  armor_class         Int?
-  initiative          Int?
-  speed               String?  @db.VarChar(50)
-  hit_points_current  Int?
-  hit_points_max      Int?
+  playerId             Int      @id @default(autoincrement())
+  userId               Int 
+  roomId               Int
+  name                 String   @db.VarChar(60)
+  avatar_url           String?  @db.VarChar(255)
+  class_level          String?  @db.VarChar(100)
+  race                 String?  @db.VarChar(50)
+  background           String?  @db.VarChar(100)
+  alignment            String?  @db.VarChar(50)
+  experience           Int?
+  inspiration          Boolean?
+  proficiency_bonus    Int?
+  strength             Int?
+  dexterity            Int?
+  constitution         Int?
+  intelligence         Int?
+  wisdom               Int?
+  charisma             Int?
+  armor_class          Int?
+  initiative           Int?
+  speed                String?  @db.VarChar(50)
+  hit_points_current   Int?
+  hit_points_max       Int?
   temporary_hit_points Int?
-  hit_dice            String?  @db.VarChar(50)
+  hit_dice             String?  @db.VarChar(50)
   death_saves_successes Int?
   death_saves_failures Int?
-  personality_traits  String?  @db.Text
-  ideals              String?  @db.Text
-  bonds               String?  @db.Text
-  flaws               String?  @db.Text
-  features_traits     String?  @db.Text
-  skills              String?  @db.Text
-  saving_throws       String?  @db.Text
-  attacks_spells      String?  @db.Text
-  equipment           String?  @db.Text
-  languages           String?  @db.Text
-  annotations         String?  @db.Text
+  personality_traits   String?  @db.Text
+  ideals               String?  @db.Text
+  bonds                String?  @db.Text
+  flaws                String?  @db.Text
+  features_traits      String?  @db.Text
+  skills               String?  @db.Text
+  saving_throws        String?  @db.Text
+  attacks_spells       String?  @db.Text
+  equipment            String?  @db.Text
+  languages            String?  @db.Text
+  annotations          String?  @db.Text
 
-  user                User     @relation(fields: [userId], references: [id])
+  // Additional fields
+  faction              String?  @db.VarChar(100)
+  dci_no               String?  @db.VarChar(100)
+  str_save             Int?
+  str_save_checked     Boolean?
+  dex_save             Int?
+  dex_save_checked     Boolean?
+  con_save             Int?
+  con_save_checked     Boolean?
+  int_save             Int?
+  int_save_checked     Boolean?
+  wis_save             Int?
+  wis_save_checked     Boolean?
+  cha_save             Int?
+  cha_save_checked     Boolean?
+  skill_acrobatics              Int?
+  skill_acrobatics_checked      Boolean?
+  skill_animal_handling         Int?
+  skill_animal_handling_checked Boolean?
+  skill_arcana                  Int?
+  skill_arcana_checked          Boolean?
+  skill_athletics               Int?
+  skill_athletics_checked       Boolean?
+  skill_deception               Int?
+  skill_deception_checked       Boolean?
+  skill_history                 Int?
+  skill_history_checked         Boolean?
+  skill_insight                 Int?
+  skill_insight_checked         Boolean?
+  skill_intimidation            Int?
+  skill_intimidation_checked    Boolean?
+  skill_investigation           Int?
+  skill_investigation_checked   Boolean?
+  skill_medicine                Int?
+  skill_medicine_checked        Boolean?
+  skill_nature                  Int?
+  skill_nature_checked          Boolean?
+  skill_perception              Int?
+  skill_perception_checked      Boolean?
+  skill_performance             Int?
+  skill_performance_checked     Boolean?
+  skill_persuasion              Int?
+  skill_persuasion_checked      Boolean?
+  skill_religion                Int?
+  skill_religion_checked        Boolean?
+  skill_sleight_of_hand         Int?
+  skill_sleight_of_hand_checked Boolean?
+  skill_stealth                 Int?
+  skill_stealth_checked         Boolean?
+  skill_survival                Int?
+  skill_survival_checked        Boolean?
+  passive_perception    Int?
+  other_proficiencies   String?  @db.Text
+  cp                   Int?
+  sp                   Int?
+  ep                   Int?
+  gp                   Int?
+  pp                   Int?
+  equipment2           String?   @db.Text
+  age                  String?   @db.VarChar(50)
+  height               String?   @db.VarChar(50)
+  weight               String?   @db.VarChar(50)
+  eyes                 String?   @db.VarChar(50)
+  skin                 String?   @db.VarChar(50)
+  hair                 String?   @db.VarChar(50)
+  appearance           String?   @db.Text
+  backstory            String?   @db.Text
+  faction_img          String?   @db.VarChar(255)
+  faction_rank         String?   @db.VarChar(100)
+  allies               String?   @db.Text
+  allies2              String?   @db.Text
+  additional_features  String?   @db.Text
+  additional_features2 String?   @db.Text
+  total_non_consumable_magic_items Int?
+  treasure             String?   @db.Text
+  treasure2            String?   @db.Text
+  spellcasting_class   String?   @db.VarChar(100)
+  prepared_spells_total Int?
+  spell_save_dc        Int?
+  spell_attack_bonus   Int?
+  cantrips             String?   @db.Text
+  lvl1_spell_slots_total Int?
+  lvl1_spell_slots_used Int?
+  lvl1_spells          String?   @db.Text
+  lvl2_spell_slots_total Int?
+  lvl2_spell_slots_used Int?
+  lvl2_spells          String?   @db.Text
+  lvl3_spell_slots_total Int?
+  lvl3_spell_slots_used Int?
+  lvl3_spells          String?   @db.Text
+  lvl4_spell_slots_total Int?
+  lvl4_spell_slots_used Int?
+  lvl4_spells          String?   @db.Text
+  lvl5_spell_slots_total Int?
+  lvl5_spell_slots_used Int?
+  lvl5_spells          String?   @db.Text
+  lvl6_spell_slots_total Int?
+  lvl6_spell_slots_used Int?
+  lvl6_spells          String?   @db.Text
+  lvl7_spell_slots_total Int?
+  lvl7_spell_slots_used Int?
+  lvl7_spells          String?   @db.Text
+  lvl8_spell_slots_total Int?
+  lvl8_spell_slots_used Int?
+  lvl8_spells          String?   @db.Text
+  lvl9_spell_slots_total Int?
+  lvl9_spell_slots_used Int?
+  lvl9_spells          String?   @db.Text
+
+  user                 User     @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "userId")
   @@index([roomId], map: "roomId")

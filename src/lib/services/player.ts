@@ -50,6 +50,12 @@ export async function updatePlayer(p) {
   return player;
 }
 
+export async function getPlayers(uid: number) {
+  return await prisma.player.findMany({
+    where: { userId: uid }
+  }) || {};
+}
+
 export async function getPlayer(uid: number, rid: number) {
   return await prisma.player.findFirst({
     where: {

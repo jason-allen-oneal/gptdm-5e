@@ -1,194 +1,208 @@
+import OpenAI from "openai";
 import sysPrompt from "@/files/sysPrompt";
 import prompts from "@/files/prompts";
-import prisma from "@/lib/prisma";
-import { getMessages } from "@/lib/services/room";
-import { formatModelInput, formatModelOutput, diceRoll } from "@/lib/utils";
-import OpenAI from "openai";
+import { strFormat, formatModelOutput } from "@/lib/utils";
+import { getMessages, addMessage } from "@/lib/services/room";
 
 export default class AI {
   model: string;
   llm: any;
-  assistant: any;
-  sourceDir: string;
   SYSID: number;
   GPTDMId: number;
-  thread: any;
-
-  constructor() {
-    this.sourceDir = "src/files/source/";
-    
+  messages: any[];
+  room: any;
+  user: any;
+  tools: any[];
+  creationMode: boolean;
+  
+  constructor(room, user) {
     this.llm = new OpenAI({
-      organization: "org-KwT9TRXftjDS0P3W5z2HsBAw",
-      project: "proj_y5wkfAAQFCkvxG7Tvo895TqV",
+      apiKey: process.env.OPENAI_API_KEY,
     });
+    
     this.model = "gpt-4o-mini";
-
+    this.room = room;
+    this.user = user;
+    
     this.SYSID = 3;
     this.GPTDMId = 4;
+    
+    this.creationMode = false;
+    
+    this.tools = [
+      {
+        "type": "function",
+        "function": {
+          "name": "diceRoll",
+          "description": "Roll some dice",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "num": {
+                "type": "number",
+                "description": "How many dice to roll",
+              },
+              "sides": {
+                "type": "number",
+                "description": "How many sides on each die"
+              },
+            },
+            "required": ["num", "sides"],
+          },
+        }
+      }
+    ];
+    
+    this.messages = [
+      {
+        role: "system",
+        content: sysPrompt,
+      },
+    ];
   }
   
-  async createThread() {
-    return await this.llm.beta.threads.create();
-  }
-
-  async init(rid: number) {
-    // gather previous messages
-    const msgs = await this.loadConversation(rid);
-    
-    await this.getAssistant();
-    
-    this.thread = await this.llm.beta.threads.create({
-      messages: msgs
-    });
+  async init() {
+    await this.getRoomHistory();
   }
   
-  async getAssistant() {
-    const assistants = await this.llm.beta.assistants.list({
-      order: "desc",
-      limit: "20",
-    });
+  async getRoomHistory() {
+    const messages = await getMessages(this.room.id);
     
-    this.assistant = await this.llm.beta.assistants.retrieve(assistants.data[0].id);
-  }
-
-  async _getRoomHistory(rid: number) {
-    const messages = await getMessages(rid);
-    const conversation = [];
-
     for (const msg of messages) {
       const obj = {
         id: msg.author.id,
         name: msg.author.name,
         socket: msg.author.socket,
         player: msg.author.player.length > 0 ? msg.author.player[0] : {},
-        rid: rid,
+        rid: this.room.id,
         content: msg.message
       };
       
       const json = JSON.stringify(obj);
 
       if (obj.id === this.GPTDMId) {
-        conversation.push({
+        this.messages.push({
           role: "assistant",
           content: json
         });
       } else if (obj.id !== this.GPTDMId && obj.id !== this.SYSID) {
-        conversation.push({
+        this.messages.push({
           role: "user",
           content: json
         });
       }
     }
-
-    return conversation;
-  }
-
-  async loadConversation(rid: number) {
-    const conversation = await this._getRoomHistory(rid);
-
-    return conversation;
   }
   
-  async welcome(data: any) {
+  async welcome(user) {
+    const result = await this.sendEvent({
+      type: "user-join",
+      data: {
+        user: user,
+      }
+    });
+    if (result.type == "creation") {
+      this.creationMode = true;
+    }
+    return result;
+  }
+  
+  async sendEvent(data) {
+    console.log("event data", data);
+    let p = "";
     
-    const welcomeData = await this.event({
-      event: "user-join",
-      room: data.room,
-      data: data.data
+    if (data.type == "user-join") {
+      if (this.room.id == 1) {
+        p = strFormat(prompts["user-join"], this.user.name, this.room.id, this.user.id);
+      } else {
+        p = strFormat(prompts["user-join-room"], this.user.name, this.room.id, this.user.id);
+      }
+    }
+    
+    console.log('prompt', p);
+    const prompt = [
+      {
+        role: "system",
+        content: sysPrompt + "\n\n" + p
+     }
+    ];
+    
+    return await this.interact(prompt);
+  }
+  
+  async sendMessage(msg) {
+    console.log("msg data", data);
+    
+    const obj = {
+      room: this.room.id,
+      author: this.user.id,
+      recipient: null,
+      message: msg,
+      type: this.creationMode ? "creation" : "chat"
+    };
+    
+    const message = await addMessage(obj);
+    this.addMessageToStack(message);
+    
+    prompt = this.messsges;
+    console.log('prompt', prompt);
+    return await this.interact(prompt);
+  }
+  
+  async interact(prompt) {
+    console.log('interact prompt', prompt);
+    const response = await this.llm.chat.completions.create({
+      model: this.model,
+      messages: prompt,
+      tools: this.tools,
+      tool_choice: "auto",
     });
     
-    const welcome = formatModelOutput(welcomeData);
+    const result = response.choices[0];
     
-    return welcome;
-  }
-  
-  async event(query: any) {
-    const json = JSON.stringify(query);
-    let prompt = sysPrompt;
-    
-    if (query.event === "user-join") {
-      prompt = sysPrompt + "\n\n" + prompts.userJoin;
-    }
-    
-    return await this.interact(json, prompt);
-  }
-  
-  async interact(query: string, prompt = null) {
-    const message = await this.llm.beta.threads.messages.create(
-      this.thread.id,
-      {
-        role: "user",
-        content: query
-      }
-    );
-    
-    let run = await this.llm.beta.threads.runs.createAndPoll(
-      this.thread.id,
-      {
-        assistant_id: this.assistant.id,
-        instructions: (prompt != null) ? prompt : sysPrompt
-      }
-    );
-    
-    if (run.status === 'completed') {
-      let messages = await this.llm.beta.threads.messages.list(
-        run.thread_id
-      );
-      messages = messages.data.reverse();
-      
-      const [lastItem] = messages.slice(-1);
-      return JSON.parse(lastItem.content[0].text.value);
+    if (result.finish_reason == "stop") {
+      const content = JSON.parse(result.message.content);
+      const aiResult = formatModelOutput(content);
+      console.log('aiResult', aiResult);
+      const message = await addMessage(aiResult);
+      console.log("inserted ai", message);
+      this.addMessageToStack(message);
+      return message;
+    } else if (result.finish_reason == "tool_calls") {
+      // handle tool call
+      console.log('response', response);
     } else {
-      if (run.status == "requires_action") {
-        return await this.handleRequiresAction(run);
-      } else {
-        console.log('ai run.status', run.status);
-      }
+      console.log('response', response);
     }
   }
   
-  async handleRequiresAction(run) {
-    // Check if there are tools that require outputs
-    if (
-      run.required_action &&
-      run.required_action.submit_tool_outputs &&
-      run.required_action.submit_tool_outputs.tool_calls
-    ) {
-      // Loop through each tool in the required action section
-      const args = JSON.parse(run.required_action.submit_tool_outputs.tool_calls[0].function.arguments);
-      
-      const toolOutputs = run.required_action.submit_tool_outputs.tool_calls.map((tool) => {
-        if (tool.function.name === "diceRoll") {
-          return {
-            tool_call_id: tool.id,
-            output: diceRoll(args.num, args.sides),
-          };
-        }
+  async addMessageToStack(msg) {
+    const hasPlayer = msg.author.hasOwnProperty("player");
+    const obj = {
+      id: msg.author.id,
+      name: msg.author.name,
+      socket: msg.author.socket,
+      player: (hasPlayer && msg.author.player.length > 0) ? msg.author.player[0] : {},
+      rid: this.room.id,
+      content: msg.message,
+      type: msg.type,
+    };
+    
+    const json = JSON.stringify(obj);
+    
+    if (obj.id === this.GPTDMId) {
+      this.messages.push({
+        role: "assistant",
+        content: json
       });
-      
-      // Submit all tool outputs at once after collecting them in a list
-      if (toolOutputs.length > 0) {
-        run = await this.llm.beta.threads.runs.submitToolOutputsAndPoll(
-          this.thread.id,
-          run.id,
-          {
-            tool_outputs: toolOutputs
-          },
-        );
-        
-        console.log("Tool outputs submitted successfully.");
-        console.log('tool_output', toolOutputs);
-        return toolOutputs;
-      } else {
-        console.log("No tool outputs to submit.");
-      }
-      
-      // Check status after submitting tool outputs
-      console.log("run status", run.status);
+    } else if (obj.id !== this.GPTDMId && obj.id !== this.SYSID) {
+      this.messages.push({
+        role: "user",
+        content: json
+      });
     }
   }
 }
-
 
 
 

@@ -10,7 +10,7 @@ import AI from "@/lib/AI";
 
 async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, nextAuthConfig);
-  console.log('sid', session);
+  console.log('session', session);
   if (!session) {
     return res.send({status: "error", message: "No session!"});
   }
@@ -34,7 +34,7 @@ async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
       if (!user) {
         return next(new Error("invalid user"));
       }
-
+      
       user.socket = socket.id;
       socket.user = await updateUser(user);
 
@@ -46,25 +46,20 @@ async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
     io.on('connection', async (socket) => {
       console.log(`${socket.id} connected`);
 
-      const ai = new AI();
-      await ai.init(room.id);
-      
+      const ai = new AI(room, user);
+      await ai.init();
 
       socket.join(room.name);
 
       io.in(room.name).emit('user-joined', socket.user);
       
-      const welcomeData = await ai.welcome({
-        event: "user-join",
-        room: room.id,
-        data: {
-          user: socket.user
-        }
+      const welcome = await ai.welcome(socket.user);
+      
+      io.in(socket.id).emit('new-message', welcome);
+      
+      socket.on('new-private-message', async (data) => {
+        
       });
-      
-      const aiWelcome = await addMessage(welcomeData);
-      
-      io.in(room.name).emit('new-message', aiWelcome);
 
       // Listen for new messages
       socket.on('new-message', async (data) => {
@@ -73,18 +68,19 @@ async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
           author: data.user.id,
           recipient: null,
           message: data.message,
-          type: "chat"
+          type: ai.creationMode ? "creation" : "chat"
         };
         
         const message = await addMessage(obj);
-
-        io.in(room.name).emit('new-message', message);
-
-        const aiInput = formatModelInput(message, player);
+        console.log('message', message);
+        ai.addMessageToStack(message);
         
+        io.in(socket.id).emit('new-message', message);
+
         try {
-          const aiResult = await ai.interact(aiInput);
-          console.log('room', room);
+          console.log('ai.messages', ai.messages);
+          const aiResult = await ai.interact(ai.messsges);
+          console.log('socket aiResult', aiResult);
           if (Array.isArray(aiResult)) {
             const msg = aiResult[0].output;
             const obj = {
@@ -102,6 +98,7 @@ async function ioHandler(req: NextApiRequest, res: NextApiResponse) {
               const imgUrl = await ai.getImage(aiResult.content);
               io.in(room.name).emit('new-image', imgUrl);
             } else {
+              console.log("aiResult.player", aiResult.player)
               if (JSON.stringify(aiResult.player) != "{}" && JSON.stringify(aiResult.player) != undefined) {
                 player = await updatePlayer(aiResult.player);
               }
